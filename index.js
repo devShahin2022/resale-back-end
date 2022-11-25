@@ -16,10 +16,21 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run (){
     try{
         // All collections or data tables
-        const products = client.db('bysell-assignment-12-db').collection('products');
-        const users = client.db('bysell-assignment-12-db').collection('users');
+        const productsCollection = client.db('bysell-assignment-12-db').collection('products');
+        const usersCollection = client.db('bysell-assignment-12-db').collection('users');
 
-        console.log('db connection success');
+        // Get all users data
+        app.get('/users', async(req, res) => {
+           const result = await usersCollection.find({}).toArray();
+           res.send(result);
+        });
+        // Get all users data
+        app.post('/current-user-data', async(req, res) => {
+            const currentEmail = await req.body.currentUserEmail;
+            const result = await usersCollection.find({email : currentEmail}).toArray();
+            console.log(result);
+            res.send(result);
+         });
         
     }catch{
         console.log('Database relevant error occured!');
