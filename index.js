@@ -28,10 +28,23 @@ async function run (){
         app.post('/current-user-data', async(req, res) => {
             const currentEmail = await req.body.currentUserEmail;
             const result = await usersCollection.find({email : currentEmail}).toArray();
-            console.log(result);
+            console.log('add data db', result);
             res.send(result);
+        });
+
+        // insert a user
+        app.post('/add-user', async(req, res) => {
+            const userinfo =await req.body.userData;
+            // check user exist ?
+            const existUser = await usersCollection.find({email : userinfo.email}).toArray();
+            console.log('userexits data ', existUser);
+            if(existUser.length > 0){
+                res.send({status : true, message : 'User already added'});
+            }else{
+                const result = await usersCollection.insertOne(userinfo);
+                res.send({status : true, message : 'New user added success'});
+            }
          });
-        
     }catch{
         console.log('Database relevant error occured!');
     }
