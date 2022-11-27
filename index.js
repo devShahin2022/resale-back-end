@@ -59,6 +59,23 @@ async function run (){
             const result = await productsCollection.find({userEmail : email}).sort({uploadedTime : -1}).toArray();
             res.send(result);
         });
+    
+        // make advirtised product
+        app.put('/make-advirtised', async(req, res) => {
+            const id =await req.body.id;
+            const result = await productsCollection.updateOne( { _id: ObjectId(id) }, [ { $set: { "advirtised": true} } ] )
+
+            res.send(result);
+        });
+
+        // make delete product
+        app.delete('/delete-product', async(req, res) => {
+            const id =await req.body.id;
+            const result = await productsCollection.deleteOne( { _id: ObjectId(id) } );
+
+            res.send(result);
+        });
+    
 
     }catch{
         console.log('Database relevant error occured!');
