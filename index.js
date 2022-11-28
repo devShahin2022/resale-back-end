@@ -18,6 +18,8 @@ async function run (){
         // All collections or data tables
         const productsCollection = client.db('bysell-assignment-12-db').collection('products');
         const usersCollection = client.db('bysell-assignment-12-db').collection('users');
+        const bookedSoldCollection = client.db('bysell-assignment-12-db').collection('bookedOrSoldProduct');
+        const brandCollection = client.db('bysell-assignment-12-db').collection('brand-category');
 
         // Get all users data
         app.get('/users', async(req, res) => {
@@ -75,8 +77,35 @@ async function run (){
 
             res.send(result);
         });
-    
 
+        // get my buyers  //incompleted
+        app.get('/my-buyers', async(req, res) => {
+            const id =await req.body.email;
+            const result = await bookedSoldCollection.find({userEmail : email}).sort({uploadedTime : -1}).toArray();
+
+            res.send(result);
+        });
+
+        // get all category name 
+        app.get('/all-category', async(req, res) => {
+            const id =await req.body.email;
+            const result = await brandCollection.find({}).toArray();
+            res.send(result);
+        });
+        // get data by category name
+        app.get('/getdata-by-brand', async(req, res) => {
+            const Id = await req.query.id;
+            const result = await productsCollection.find({brandId : Id, status : "available"}).sort({uploadedTime : -1}).toArray();
+            console.log(result);
+            res.send(result);
+        });
+
+        // get single data for brand name
+        app.get('/single-cat-name', async(req, res) => {
+            const Id =await req.query.id;
+            const result = await brandCollection.find({_id : ObjectId(Id)}).toArray();
+            res.send(result);
+        });
     }catch{
         console.log('Database relevant error occured!');
     }
