@@ -15,11 +15,12 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 // Database all operation
 async function run (){
     try{
-        // All collections or data tables
+        // All collections or data tables 
         const productsCollection = client.db('bysell-assignment-12-db').collection('products');
         const usersCollection = client.db('bysell-assignment-12-db').collection('users');
         const bookedSoldCollection = client.db('bysell-assignment-12-db').collection('bookedOrSoldProduct');
         const brandCollection = client.db('bysell-assignment-12-db').collection('brand-category');
+        const bookedOrSoldCollection = client.db('bysell-assignment-12-db').collection('bookedOrSoldProduct');
 
         // Get all users data
         app.get('/users', async(req, res) => {
@@ -106,6 +107,20 @@ async function run (){
             const result = await brandCollection.find({_id : ObjectId(Id)}).toArray();
             res.send(result);
         });
+
+        // store booked data
+        app.post('/store-booked-data', async(req, res) => {
+            const data =await req.body.bookedInformation;
+            const result = await bookedOrSoldCollection.insertOne(data);
+            // res.send(result);
+            if(result.acknowledged){
+                const id = data.prodId;
+                const updateRes = await productsCollection.updateOne( { _id: ObjectId(id) }, [ { $set: { status : "booked"} } ] )
+                res.send(updateRes);
+                console.log(updateRes);
+            }
+        });
+
     }catch{
         console.log('Database relevant error occured!');
     }
