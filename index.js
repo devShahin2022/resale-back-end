@@ -22,9 +22,10 @@ async function run (){
         const brandCollection = client.db('bysell-assignment-12-db').collection('brand-category');
         const bookedOrSoldCollection = client.db('bysell-assignment-12-db').collection('bookedOrSoldProduct');
         const wishListCollection = client.db('bysell-assignment-12-db').collection('wishlist-products');
+        const reportProductCollection = client.db('bysell-assignment-12-db').collection('reportProduct');
         
 
-        // Get all users data
+        // Get all users data 
         app.get('/users', async(req, res) => {
            const result = await usersCollection.find({}).toArray();
            res.send(result);
@@ -269,6 +270,116 @@ async function run (){
             const result = await wishListCollection.deleteOne({ prodId : Id });
             res.send(result);
         });
+        
+    //////======== get my buyers route =====
+    // uses previous route  name : booked-products-data
+        
+    app.post('/seller/booked-products-data', async(req, res) => {
+
+        const sellmail =await req.body.email;
+        console.log(sellmail);
+        const result = await bookedOrSoldCollection.aggregate([
+                { $match: { sellerEmail : sellmail } },
+                {
+                    $addFields: {
+                        makeobjectId: {
+                        $toObjectId: "$prodId"
+                        }
+                    }
+                },
+                {
+                    $lookup: {
+                    from: "products",
+                    localField: "makeobjectId",
+                    foreignField: "_id",
+                    as: "productDetails"
+                    }
+                },
+                {
+                    $unwind: "$productDetails"
+                },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "productDetails.userEmail",
+                        foreignField: "email",
+                        as: "userInfo"
+                    }
+                },
+                {
+                    $unwind: "$userInfo"
+                },
+                {
+                    $lookup: {
+                        from: "brand-category",
+                        localField: "productDetails.customCatIdByTime",
+                        foreignField: "time",
+                        as: "categoryInfo"
+                    }
+                },
+                {
+                    $unwind: "$categoryInfo"
+                },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "buyerEmail",
+                        foreignField: "email",
+                        as: "buyerInfo"
+                    }
+                },
+                {
+                    $unwind: "$buyerInfo"
+                }
+            ]).toArray();
+
+            // console.log('buyer email', BuyerEmail);
+            // console.log('data', result);
+
+        res.send(result);
+    });
+
+// accepted product route accepted-order
+    app.post('/accepted-order', async(req, res) => {
+        const Id =await req.body.id;
+        const result = await bookedOrSoldCollection.updateOne( { _id: ObjectId(Id) }, [ { $set: { orderStatus : "booked"} } ] );
+        return res.send(result);
+    });
+
+// Keep pending order data
+app.post('/keep-pending-order', async(req, res) => {
+    const Id =await req.body.id;
+    const result = await bookedOrSoldCollection.updateOne( { _id: ObjectId(Id) }, [ { $set: { orderStatus : "pending"} } ] );
+    return res.send(result);
+});
+
+// store report data
+
+app.post('/keep-report-data', async(req, res) => {
+    const data =await req.body.reportItem;
+
+    const productId = data.prod._id;
+    const currentUser = data.reporter.email;
+    const result = await reportProductCollection.find({ ProdId : productId, reporterEmail : currentUser }).toArray();
+
+    if(result.length ===  0){
+        const dataInsert = await reportProductCollection.insertOne(data);
+        if(dataInsert.acknowledged){
+            return res.send({"acknowledged" : true , "msg" : "report send success"});
+        }
+    }
+    else{
+        return res.send({"acknowledged" : false , "msg" : "You already report this product"});
+    }
+
+});
+
+// Admin route for fetching report item
+
+
+
+
+
 
 
 ///////////////////////////////////
@@ -276,7 +387,7 @@ async function run (){
 
 // delete
 app.get('/delete', async (req, res) => {
-    const result = await wishListCollection.deleteMany({});
+    const result = await reportProductCollection.deleteMany({});
     res.send(result);
 })
 
