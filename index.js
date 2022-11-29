@@ -21,6 +21,8 @@ async function run (){
         const bookedSoldCollection = client.db('bysell-assignment-12-db').collection('bookedOrSoldProduct');
         const brandCollection = client.db('bysell-assignment-12-db').collection('brand-category');
         const bookedOrSoldCollection = client.db('bysell-assignment-12-db').collection('bookedOrSoldProduct');
+        const wishListCollection = client.db('bysell-assignment-12-db').collection('wishlist-products');
+        
 
         // Get all users data
         app.get('/users', async(req, res) => {
@@ -169,17 +171,104 @@ async function run (){
                     },
                 ]).toArray();
 
-                console.log('buyer email', BuyerEmail);
-                console.log('data', result);
+                // console.log('buyer email', BuyerEmail);
+                // console.log('data', result);
 
             res.send(result);
-
-
         });
 
+        // cancel product from my order
+        app.delete('/cancel-order', async(req, res) => {
+            const Id =await req.body.id;
+            const result = await bookedOrSoldCollection.deleteOne({ prodId : Id });
+            if(result.acknowledged){
+                const resultUpdated = await productsCollection.updateOne( { _id: ObjectId(Id) }, [ { $set: { status : "available"} } ] );
+                res.send(resultUpdated);
+            }else{
+                return res.send({"acknowledged" : false});
+            }
+        });
 
+    // add product to my wishlist 
+    app.post('/store-wishlist-data', async(req, res) => {
+        const data =await req.body.wishListProductInfo;
 
+        // first check data alreadt exit or not
+        const productId = data.prodId;
+        const productBuyer = data.buyerEmail;
 
+        const checkResult = await wishListCollection.find({ 
+            prodId : productId , buyerEmail : productBuyer
+        
+        }).toArray();
+        if(checkResult.length > 0){
+            res.send({"status" : false, "msg" : "Product already added wishlist"})
+        }else{
+            const result = await wishListCollection.insertOne(data);
+            res.send({"status" : true, "msg" : "Suceess product added wishlist"})
+        }
+    });
+
+    // combine information fetch for orders data for wishlist ( category + order + Products + seller )
+    app.post('/wishlist-product', async(req, res) => {
+
+        const BuyerEmail =await req.body.email;
+        const result = await wishListCollection.aggregate([
+                { $match: { buyerEmail : BuyerEmail } },
+                {
+                    $addFields: {
+                        makeobjectId: {
+                        $toObjectId: "$prodId"
+                        }
+                    }
+                },
+                {
+                    $lookup: {
+                    from: "products",
+                    localField: "makeobjectId",
+                    foreignField: "_id",
+                    as: "productDetails"
+                    }
+                },
+                {
+                    $unwind: "$productDetails"
+                },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "productDetails.userEmail",
+                        foreignField: "email",
+                        as: "userInfo"
+                    }
+                },
+                {
+                    $unwind: "$userInfo"
+                },
+                {
+                    $lookup: {
+                        from: "brand-category",
+                        localField: "productDetails.customCatIdByTime",
+                        foreignField: "time",
+                        as: "categoryInfo"
+                    }
+                },
+                {
+                    $unwind: "$categoryInfo"
+                },
+            ]).toArray();
+
+            // console.log('buyer email', BuyerEmail);
+            // console.log('data', result);
+
+        res.send(result);
+    });
+
+    // remove a wishlist product from db
+        app.delete('/cancel-wishlist-product', async(req, res) => {
+            const Id =await req.body.id;
+            const result = await wishListCollection.deleteOne({ prodId : Id });
+            res.send(result);
+        });
 
 
 ///////////////////////////////////
@@ -187,7 +276,7 @@ async function run (){
 
 // delete
 app.get('/delete', async (req, res) => {
-    const result = await productsCollection.deleteMany({});
+    const result = await wishListCollection.deleteMany({});
     res.send(result);
 })
 
