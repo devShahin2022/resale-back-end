@@ -121,10 +121,88 @@ async function run (){
             }
         });
 
-    }catch{
+        // combine information fetch for orders data ( category + order + Products + seller )
+        app.post('/booked-products-data', async(req, res) => {
+
+            const BuyerEmail =await req.body.email;
+            const result = await bookedOrSoldCollection.aggregate([
+                    { $match: { buyerEmail : BuyerEmail } },
+                    {
+                        $addFields: {
+                            makeobjectId: {
+                            $toObjectId: "$prodId"
+                            }
+                        }
+                    },
+                    {
+                        $lookup: {
+                        from: "products",
+                        localField: "makeobjectId",
+                        foreignField: "_id",
+                        as: "productDetails"
+                        }
+                    },
+                    {
+                        $unwind: "$productDetails"
+                    },
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "productDetails.userEmail",
+                            foreignField: "email",
+                            as: "userInfo"
+                        }
+                    },
+                    {
+                        $unwind: "$userInfo"
+                    },
+                    {
+                        $lookup: {
+                            from: "brand-category",
+                            localField: "productDetails.customCatIdByTime",
+                            foreignField: "time",
+                            as: "categoryInfo"
+                        }
+                    },
+                    {
+                        $unwind: "$categoryInfo"
+                    },
+                ]).toArray();
+
+                console.log('buyer email', BuyerEmail);
+                console.log('data', result);
+
+            res.send(result);
+
+
+        });
+
+
+
+
+
+
+///////////////////////////////////
+//////////////Fake api
+
+// delete
+app.get('/delete', async (req, res) => {
+    const result = await productsCollection.deleteMany({});
+    res.send(result);
+})
+
+
+
+
+    }
+    catch{
         console.log('Database relevant error occured!');
     }
 }
+
+
+
+
 
 run();
 
