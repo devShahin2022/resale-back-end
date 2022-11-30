@@ -421,7 +421,75 @@ app.get('/all-products-admin', async(req, res) => {
 })
 
 
+// get all buyers data for admin route
+app.get('/get-all-buyer', async(req, res) => {
+    const result = await usersCollection.find({ role : 'buyer' }).toArray();
+    res.send(result);
+})
 
+// get all sellers data for admin route
+app.get('/get-all-seller', async(req, res) => {
+    const result = await usersCollection.find({ role : 'seller' }).toArray();
+    res.send(result);
+})
+
+// make unverified 
+app.post('/make-unverified', async(req, res) => {
+    const Id = req.body.id;
+    const result = await usersCollection.updateOne( { _id: ObjectId(Id) }, [ { $set: { isVerified : false } } ] );
+    res.send(result);
+})
+
+// make verified 
+app.post('/make-verified', async(req, res) => {
+    const Id = req.body.id;
+    const result = await usersCollection.updateOne( { _id: ObjectId(Id) }, [ { $set: { isVerified : true } } ] );
+    res.send(result);
+})
+
+
+// make admin 
+app.post('/make-admin', async(req, res) => {
+    const Id = req.body.id;
+    const result = await usersCollection.updateOne( { _id: ObjectId(Id) }, [ { $set: { role : "admin" } } ] );
+    res.send(result);
+})
+
+
+
+// get all secodary admin 
+app.get('/get-all-secondary-admin', async(req, res) => {
+    const result = await usersCollection.find( {  role : 'admin' }
+        // { $and: [ { email: { $ne: 'shahinsss1949@gmail.com' } }, { role: 'admin' } ] }
+    ).toArray();
+    res.send(result);
+});
+
+// make seller 
+app.post('/make-seller', async(req, res) => {
+    const Id = req.body.id;
+    const result = await usersCollection.updateOne( { _id: ObjectId(Id) }, [ { $set: { role : 'seller' } } ] );
+    res.send(result);
+})
+
+// make buyer 
+app.post('/make-buyer', async(req, res) => {
+    const Id = req.body.id;
+    const result = await usersCollection.updateOne( { _id: ObjectId(Id) }, [ { $set: { role : 'buyer' } } ] );
+    res.send(result);
+});
+
+// delete seller or buyer 
+app.delete('/delete-seller-buyer', async(req, res) => {
+    const Id = req.body.id;
+
+    console.log(Id);   
+
+
+
+    const result = await usersCollection.deleteOne({ _id : ObjectId(Id) });
+    res.send(result);
+});
 
 
 
@@ -429,11 +497,11 @@ app.get('/all-products-admin', async(req, res) => {
 
 
 ///////////////////////////////////
-//////////////Fake api
+//////////////Fake api   
 
 // delete
 app.get('/delete', async (req, res) => {
-    const result = await reportProductCollection.deleteMany({});
+    const result = await usersCollection.deleteMany({});
     res.send(result);
 })
 
