@@ -482,18 +482,19 @@ app.post('/make-buyer', async(req, res) => {
 // delete seller or buyer 
 app.delete('/delete-seller-buyer', async(req, res) => {
     const Id = req.body.id;
-
-    console.log(Id);   
-
-
+    console.log(Id);
 
     const result = await usersCollection.deleteOne({ _id : ObjectId(Id) });
     res.send(result);
 });
 
-
-
-
+//  get all advirtised product
+app.get('/advirtised-product', async(req, res) => {
+    const result = await productsCollection.find(
+     { $and: [ { advirtised : true } , { status: 'available' } ] }
+    ).sort({uploadedTime : -1}).toArray();
+    res.send(result);
+});
 
 
 ///////////////////////////////////
