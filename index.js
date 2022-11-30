@@ -399,9 +399,26 @@ app.delete('/delete-report', async(req, res) => {
 });
 
 
+// fetch all product for admin
+app.get('/all-products-admin', async(req, res) => {
+    const result = await productsCollection.aggregate([
+        { $sort: { uploadedTime : -1 } },
+        {
+            $lookup: {
+            from: "brand-category",
+            localField: "customCatIdByTime",
+            foreignField: "time",
+            as: "catDetails"
+            }
+        },
+        {
+            $unwind: "$catDetails"
+        }
 
+    ]).toArray();
 
-
+    res.send(result);
+})
 
 
 
