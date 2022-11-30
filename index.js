@@ -501,10 +501,10 @@ app.get('/advirtised-product', async(req, res) => {
 //////////////Fake api   
 
 // delete
-app.get('/delete', async (req, res) => {
-    const result = await usersCollection.deleteMany({});
-    res.send(result);
-})
+// app.get('/delete', async (req, res) => {
+//     const result = await productsCollection.deleteMany({});
+//     res.send(result);
+// })
 
 
 
