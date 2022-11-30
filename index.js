@@ -376,6 +376,35 @@ app.post('/keep-report-data', async(req, res) => {
 
 // Admin route for fetching report item
 
+app.get('/reported-product', async (req, res) => {
+    const result = await reportProductCollection.find({ }).sort({time : -1}).toArray();
+    res.send(result);
+});
+
+// delete reported product from db
+app.delete('/delete-reported-product', async(req, res) => {
+
+    const Id =await req.body.ProductId;
+    const result = await productsCollection.deleteOne({ _id : ObjectId(Id) });
+    res.send(result);
+});
+
+
+// delete reporte from db
+app.delete('/delete-report', async(req, res) => {
+    const Id =await req.body.reportId;
+    console.log(Id);
+    const result = await reportProductCollection.deleteOne({ _id : ObjectId(Id) });
+    res.send(result);
+});
+
+
+
+
+
+
+
+
 
 
 
